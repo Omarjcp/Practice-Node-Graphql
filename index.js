@@ -1,58 +1,29 @@
+const { readFileSync } = require("fs");
+const path = require("path");
 const express = require("express");
+const { graphqlHTTP } = require("express-graphql");
+const { buildSchema } = require("graphql");
+
 require("dotenv").config();
+
 require("./database/index");
-
-// Controllers
-const {
-  createProductController,
-} = require("./controllers/products/createProduct.contr");
-const {
-  deleteProductController,
-} = require("./controllers/products/deleteProduct.contr");
-const {
-  getProductController,
-} = require("./controllers/products/getProduct.contr");
-const {
-  listProductsController,
-} = require("./controllers/products/listProducts.contr");
-const {
-  updateProductController,
-} = require("./controllers/products/updateProduct.contr");
-
-const app = express();
+const { resolvers } = require("./resolvers/products");
 
 const PORT = process.env.LOCAL_PORT;
 
-// Middleware simulacion de roles para autorización
-const isAdmin = (req, res, next) => {
-  const isAdminHeaders = req.headers["is-admin"];
+const schemas = readFileSync(path.join(__dirname, "./schema.graphql"), "utf8");
+const schema = buildSchema(`${schemas}`);
 
-  if (isAdminHeaders) next();
-  else res.status(401).json({ message: "access denied" });
-};
+const app = express();
 
-const isUser = (req, res, next) => {
-  const isUserHeaders = req.headers["is-user"];
-
-  if (isUserHeaders) {
-    req.user = true;
-    next();
-  } else {
-    req.user = false;
-    next();
-  }
-};
-
-// Se aplica middleware para todos los endpoints
-app.use(isUser);
-
-// Endpoints
-app
-  .get("/products", listProductsController)
-  .get("/products/:id", getProductController)
-  .post("/products", isAdmin, createProductController)
-  .patch("/products/:id", isAdmin, updateProductController)
-  .delete("/products/:id", isAdmin, deleteProductController);
+app.use(
+  "/graphql",
+  graphqlHTTP({
+    schema,
+    rootValue: resolvers,
+    graphiql: true,
+  })
+);
 
 app.listen(PORT, () => {
   console.log(`Server running is port ${PORT}`);

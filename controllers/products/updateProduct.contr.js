@@ -1,46 +1,29 @@
 const ProductModel = require("../../database/models/Products");
 
-const updateProductController = async (req, res) => {
-  try {
-    const { id: _id } = req.params;
-    const { name, description, amount, currency } = req.query;
+const updateProductController = async ({ input }) => {
+  let { _id, name, description, price } = input;
 
-    if (!_id) {
-      return res.status(400).json({
-        message: "Identify of product is required",
-      });
-    }
+  const product = await ProductModel.findById({ _id });
 
-    if (!name && !description && !amount && !currency) {
-      return res.status(400).json({
-        message: "Any field is required",
-      });
-    }
-
-    const productUpdated = await ProductModel.updateOne(
-      { _id },
-      {
-        $set: {
-          name,
-          description,
-          price: {
-            amount: Number(amount),
-            currency,
-          },
+  await ProductModel.updateOne(
+    { _id },
+    {
+      $set: {
+        name: name ? name : product?.name,
+        description: description ? description : product.description,
+        price: {
+          amount: price?.amount
+            ? parseFloat(price?.amount)
+            : product.price.amount,
+          currency: price?.currency ? price?.currency : product.price.currency,
         },
-      }
-    );
+      },
+    }
+  );
 
-    res.status(200).json({
-      message: "Product updated successful",
-      productUpdated,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      message: error.message,
-    });
-  }
+  const productUpd = await ProductModel.findById({ _id });
+
+  return productUpd;
 };
 
 module.exports = {
