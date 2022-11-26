@@ -1,35 +1,24 @@
 const ProductModel = require("../../database/models/Products");
 
-const createProductController = async (req, res) => {
-  try {
-    const { name, description, amount, currency } = req.query;
+const createProductController = async ({ input }) => {
+  const {
+    name,
+    description,
+    price: { amount, currency },
+  } = input;
 
-    if (!name || !description || !amount || !currency) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
-    }
+  const productToCreate = await new ProductModel({
+    name,
+    description,
+    price: {
+      amount: parseFloat(amount),
+      currency,
+    },
+  });
 
-    const productToCreate = await new ProductModel({
-      name,
-      description,
-      price: {
-        amount: Number(amount),
-        currency,
-      },
-    });
+  const productCreated = productToCreate.save();
 
-    const productCreated = await productToCreate.save();
-
-    res.status(200).json({
-      productCreated,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      message: error.message,
-    });
-  }
+  return productCreated;
 };
 
 module.exports = {

@@ -1,32 +1,12 @@
 const ProductModel = require("../../database/models/Products");
 
-const deleteProductController = async (req, res) => {
-  try {
-    const { id: _id } = req.params;
+const deleteProductController = async ({ id }) => {
+  console.log(id);
+  const productToDelete = await ProductModel.findById({ _id: id });
 
-    if (!_id) {
-      return res.status(400).json({
-        message: "Identify of product is required",
-      });
-    }
+  await ProductModel.deleteOne({ _id: id });
 
-    const productDeleted = await ProductModel.deleteOne({ _id });
-
-    if (!productDeleted.deletedCount) {
-      return res.status(400).json({
-        message: "Element to delete not exist",
-      });
-    }
-
-    res.status(200).json({
-      message: "Product deleted successful",
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      message: error.message,
-    });
-  }
+  return productToDelete;
 };
 
 module.exports = {
